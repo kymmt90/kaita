@@ -38,15 +38,30 @@ func main() {
 		os.Exit(1)
 	}
 
+	config := ParseConfig(data)
+	articles := GetQiitaArticles(config)
+
+	for _, article := range articles {
+		fmt.Printf("- [%s](%s)\n", article.Title, article.URL)
+	}
+}
+
+func ParseConfig(data []byte) Config {
 	config := Config{}
-	err = yaml.Unmarshal(data, &config)
+
+	err := yaml.Unmarshal(data, &config)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "kaita: %v\n", err)
 		os.Exit(1)
 	}
 
+	return config
+}
+
+func GetQiitaArticles(config Config) []Article {
 	req, err := http.NewRequest("GET", "https://qiita.com/api/v2/authenticated_user/items", nil)
 	req.Header.Add("Authorization", "Bearer "+config.Qiita.AccessToken)
+
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -61,7 +76,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "kaita: %v\n", err)
 		os.Exit(1)
 	}
-	for _, article := range articles {
-		fmt.Printf("- [%s](%s)\n", article.Title, article.URL)
-	}
+
+	return articles
 }
