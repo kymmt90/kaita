@@ -3,20 +3,21 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
 	"os"
+
+	"gopkg.in/yaml.v2"
 )
 
-type Config struct {
+type config struct {
 	Qiita struct {
 		AccessToken string `yaml:"access_token"`
 	} `yaml:"qiita.com"`
 }
 
-type Article struct {
-	Id        string
+type article struct {
+	ID        string
 	URL       string `json:"url"`
 	Title     string
 	Body      string
@@ -38,16 +39,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	config := ParseConfig(data)
-	articles := GetQiitaArticles(config)
+	config := parseConfig(data)
+	articles := getQiitaArticles(config)
 
 	for _, article := range articles {
 		fmt.Printf("- [%s](%s)\n", article.Title, article.URL)
 	}
 }
 
-func ParseConfig(data []byte) Config {
-	config := Config{}
+func parseConfig(data []byte) config {
+	config := config{}
 
 	err := yaml.Unmarshal(data, &config)
 	if err != nil {
@@ -58,7 +59,7 @@ func ParseConfig(data []byte) Config {
 	return config
 }
 
-func GetQiitaArticles(config Config) []Article {
+func getQiitaArticles(config config) []article {
 	req, err := http.NewRequest("GET", "https://qiita.com/api/v2/authenticated_user/items", nil)
 	req.Header.Add("Authorization", "Bearer "+config.Qiita.AccessToken)
 
@@ -70,7 +71,7 @@ func GetQiitaArticles(config Config) []Article {
 	}
 
 	defer resp.Body.Close()
-	var articles []Article
+	var articles []article
 	body, err := ioutil.ReadAll(resp.Body)
 	if err := json.Unmarshal(body, &articles); err != nil {
 		fmt.Fprintf(os.Stderr, "kaita: %v\n", err)
